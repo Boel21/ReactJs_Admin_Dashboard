@@ -1,5 +1,20 @@
 # Getting Started with Create React App
 
+# React Admin Dashboard
+
+npx create-react-app react admin
+
+dependencies:
+
+Install Material UI / data grid / icons --> npm i @mui/material @emotion/react @emotion/styled @mui/x-data-grid @mui/icons-material
+Install react router dom --> npm i react-router-dom
+Install react sidebar pro --> npm i react-pro-sidebar
+Install formik / yup for forms --> npm i formik yup
+Install Full Calendar --> npm i @fullcalendar/react @fullcalendar/core @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/list @fullcalendar/interaction
+Install Nivo charts --> npm i @nivo/core @nivo/pie @nivo/line @nivo/bar @nivo/geo
+
+The new classes of the sidde bar pro are in the sideBarProUpdated.html file inside Global
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

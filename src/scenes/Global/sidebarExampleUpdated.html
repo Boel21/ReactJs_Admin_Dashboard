@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<!--  ps-sidebar-root
+    ps-sidebar-container -> ps-sidebar-container
+    ps-icon-wrapper -> ps-manu-icon
+    ps-menu-item -> ps-menuitem-root
+    nav -> ps-menu-root
+    span -> ps-menu-label
+    span -> ps-menu-suffix
+    span -> ps-submenu-expand-icon
+    ps-submenu-content -->
+
+
+<head>
+    <meta charset="utf-8">
+    <title>Webpack App</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <base target="_parent">
+    <style>
+        :not(.sb-show-preparing-story)>.sb-preparing-story,
+        :not(.sb-show-preparing-docs)>.sb-preparing-docs,
+        :not(.sb-show-nopreview)>.sb-nopreview,
+        :not(.sb-show-errordisplay)>.sb-errordisplay {
+            display: none;
+        }
+
+        .sb-show-main.sb-main-centered {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .sb-show-main.sb-main-centered #root {
+            box-sizing: border-box;
+            margin: auto;
+            padding: 1rem;
+            max-height: 100%;
+            /* Hack for centering correctly in IE11 */
+        }
+
+        /* Vertical centering fix for IE11 */
+        @media screen and (-ms-high-contrast: none),
+        (-ms-high-contrast: active) {
+            .sb-show-main.sb-main-centered:after {
+                content: '';
+                min-height: inherit;
+                font-size: 0;
+            }
+        }
+
+        .sb-show-main.sb-main-fullscreen {
+            margin: 0;
+            padding: 0;
+            display: block;
+        }
+
+        .sb-show-main.sb-main-padded {
+            margin: 0;
+            padding: 1rem;
+            display: block;
+            box-sizing: border-box;
+        }
+
+        .sb-wrapper {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            font-family: 'Nunito Sans', -apple-system, '.SFNSText-Regular', 'San Francisco',
+                BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow: auto;
+        }
+
+        .sb-heading {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            margin: 10px 0;
+            padding-right: 25px;
+        }
+
+        .sb-nopreview {
+            display: flex;
+            align-content: center;
+            justify-content: center;
+        }
+
+        .sb-nopreview_main {
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .sb-nopreview_heading {
+            text-align: center;
+        }
+
+        .sb-errordisplay {
+            border: 20px solid rgb(187, 49, 49);
+            background: #222;
+            color: #fff;
+            z-index: 999999;
+        }
+
+        .sb-errordisplay_code {
+            padding: 10px;
+            background: #000;
+            color: #eee;
+            font-family: 'Operator Mono', 'Fira Code Retina', 'Fira Code', 'FiraCode-Retina', 'Andale Mono',
+                'Lucida Console', Consolas, Monaco, monospace;
+        }
+
+        .sb-errordisplay pre {
+            white-space: pre-wrap;
+        }
+
+        @-webkit-keyframes sb-rotate360 {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes sb-rotate360 {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @-webkit-keyframes sb-glow {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        @keyframes sb-glow {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* We display the preparing loaders *over* the rendering story */
+        .sb-preparing-story,
+        .sb-preparing-docs {
+            background-color: white;
+        }
+
+        .sb-loader {
+            -webkit-animation: sb-rotate360 0.7s linear infinite;
+            animation: sb-rotate360 0.7s linear infinite;
+            border-color: rgba(97, 97, 97, 0.29);
+            border-radius: 50%;
+            border-style: solid;
+            border-top-color: #646464;
+            border-width: 2px;
+            display: inline-block;
+            height: 32px;
+            left: 50%;
+            margin-left: -16px;
+            margin-top: -16px;
+            mix-blend-mode: difference;
+            overflow: hidden;
+            position: absolute;
+            top: 50%;
+            transition: all 200ms ease-out;
+            vertical-align: top;
+            width: 32px;
+            z-index: 4;
+        }
+
+        .sb-previewBlock {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0 1px 3px 0;
+            margin: 25px auto 40px;
+            max-width: 600px;
+        }
+
+        .sb-previewBlock_header {
+            align-items: center;
+            box-shadow: rgba(0, 0, 0, 0.1) 0 -1px 0 0 inset;
+            display: flex;
+            gap: 14px;
+            height: 40px;
+            padding: 0 12px;
+        }
+
+        .sb-previewBlock_icon {
+            -webkit-animation: sb-glow 1.5s ease-in-out infinite;
+            animation: sb-glow 1.5s ease-in-out infinite;
+            background: #e6e6e6;
+            height: 14px;
+            width: 14px;
+        }
+
+        .sb-previewBlock_icon:last-child {
+            margin-left: auto;
+        }
+
+        .sb-previewBlock_body {
+            -webkit-animation: sb-glow 1.5s ease-in-out infinite;
+            animation: sb-glow 1.5s ease-in-out infinite;
+            height: 182px;
+            position: relative;
+        }
+
+        .sb-argstableBlock {
+            border-collapse: collapse;
+            border-spacing: 0;
+            font-size: 13px;
+            line-height: 20px;
+            margin: 25px auto 40px;
+            max-width: 600px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .sb-argstableBlock th:first-of-type,
+        .sb-argstableBlock td:first-of-type {
+            padding-left: 20px;
+        }
+
+        .sb-argstableBlock th:nth-of-type(2),
+        .sb-argstableBlock td:nth-of-type(2) {
+            width: 35%;
+        }
+
+        .sb-argstableBlock th:nth-of-type(3),
+        .sb-argstableBlock td:nth-of-type(3) {
+            width: 15%;
+        }
+
+        .sb-argstableBlock th:laste-of-type,
+        .sb-argstableBlock td:laste-of-type {
+            width: 25%;
+            padding-right: 20px;
+        }
+
+        .sb-argstableBlock th span,
+        .sb-argstableBlock td span {
+            -webkit-animation: sb-glow 1.5s ease-in-out infinite;
+            animation: sb-glow 1.5s ease-in-out infinite;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 0;
+            box-shadow: none;
+            color: transparent;
+        }
+
+        .sb-argstableBlock th {
+            padding: 10px 15px;
+        }
+
+        .sb-argstableBlock-body {
+            border-radius: 4px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0 1px 3px 1px, rgba(0, 0, 0, 0.065) 0 0 0 1px;
+        }
+
+        .sb-argstableBlock-body tr {
+            background: transparent;
+            overflow: hidden;
+        }
+
+        .sb-argstableBlock-body tr:not(:first-child) {
+            border-top: 1px solid #e6e6e6;
+        }
+
+        .sb-argstableBlock-body tr:first-child td:first-child {
+            border-top-left-radius: 4px;
+        }
+
+        .sb-argstableBlock-body tr:first-child td:last-child {
+            border-top-right-radius: 4px;
+        }
+
+        .sb-argstableBlock-body tr:last-child td:first-child {
+            border-bottom-left-radius: 4px;
+        }
+
+        .sb-argstableBlock-body tr:last-child td:last-child {
+            border-bottom-right-radius: 4px;
+        }
+
+        .sb-argstableBlock-body td {
+            background: #fff;
+            padding-bottom: 10px;
+            padding-top: 10px;
+            vertical-align: top;
+        }
+
+        .sb-argstableBlock-body td:not(:first-of-type) {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+
+        .sb-argstableBlock-body button {
+            -webkit-animation: sb-glow 1.5s ease-in-out infinite;
+            animation: sb-glow 1.5s ease-in-out infinite;
+            background-color: rgba(0, 0, 0, 0.1);
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+            color: transparent;
+            display: inline;
+            font-size: 12px;
+            line-height: 1;
+            padding: 10px 16px;
+        }
+
+        .sb-argstableBlock-summary {
+            margin-top: 4px;
+        }
+
+        .sb-argstableBlock-code {
+            margin-right: 4px;
+            margin-bottom: 4px;
+            padding: 2px 5px;
+        }
+    </style>
+    <script>/* globals window */
+        /* eslint-disable no-underscore-dangle */
+        try {
+            if (window.top !== window) {
+                window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.top.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+                window.__VUE_DEVTOOLS_GLOBAL_HOOK__ = window.top.__VUE_DEVTOOLS_GLOBAL_HOOK__;
+                window.top.__VUE_DEVTOOLS_CONTEXT__ = window.document;
+            }
+        } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn('unable to connect to top frame for connecting dev tools');
+        }
+
+        window.onerror = function onerror(message, source, line, column, err) {
+            if (window.CONFIG_TYPE !== 'DEVELOPMENT') return;
+            // eslint-disable-next-line no-var, vars-on-top
+            var xhr = new window.XMLHttpRequest();
+            xhr.open('POST', '/runtime-error');
+            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            xhr.send(
+                JSON.stringify({
+                    /* eslint-disable object-shorthand */
+                    message: message,
+                    source: source,
+                    line: line,
+                    column: column,
+                    error: err && { message: err.message, name: err.name, stack: err.stack },
+                    origin: 'preview',
+                    /* eslint-enable object-shorthand */
+                })
+            );
+        };</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+        body {
+            height: 100vh;
+            font-family: 'Poppins', 'Roboto', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        #root {
+            height: 100%;
+        }
+
+        .sb-main-padded.sb-show-main {
+            padding: 0;
+        }
+
+        .sb-button {
+            border: 0;
+            border-radius: 3em;
+            cursor: pointer;
+            display: inline-block;
+            overflow: hidden;
+            padding: 8px 16px;
+            position: relative;
+            text-align: center;
+            -webkit-text-decoration: none;
+            text-decoration: none;
+            -webkit-transition: all 150ms ease-out;
+            transition: all 150ms ease-out;
+            -webkit-transform: translate3d(0, 0, 0);
+            -ms-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+            vertical-align: top;
+            white-space: nowrap;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            opacity: 1;
+            margin: 0;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1;
+            background: #fafafa;
+            color: #333333;
+            box-shadow: rgb(0 0 0 / 10%) 0 0 0 1px inset;
+            border-radius: 4px;
+            padding: 10px 16px;
+            display: inline;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            overflow: visible;
+            z-index: 2;
+        }
+
+        .sb-button:hover {
+            -webkit-transform: none;
+            -ms-transform: none;
+            transform: none;
+        }
+
+        .sb-button:hover {
+            background: #f2f2f2;
+        }
+
+        .sb-button:active {
+            background: #ffffff;
+        }
+    </style>
+    <style>
+        #root[hidden],
+        #docs-root[hidden] {
+            display: none !important;
+        }
+    </style>
+    <style data-emotion="css"></style>
+</head>
+
+<body class="sb-main-padded sb-show-main">
+    <div class="sb-preparing-story sb-wrapper">
+        <div class="sb-loader"></div>
+    </div>
+    <div class="sb-preparing-docs sb-wrapper">
+        <div class="sb-previewBlock">
+            <div class="sb-previewBlock_header">
+                <div class="sb-previewBlock_icon"></div>
+                <div class="sb-previewBlock_icon"></div>
+                <div class="sb-previewBlock_icon"></div>
+                <div class="sb-previewBlock_icon"></div>
+            </div>
+            <div class="sb-previewBlock_body">
+                <div class="sb-loader"></div>
+            </div>
+        </div>
+        <table aria-hidden="true" class="sb-argstableBlock">
+            <thead class="sb-argstableBlock-head">
+                <tr>
+                    <th><span>Name</span></th>
+                    <th><span>Description</span></th>
+                    <th><span>Default</span></th>
+                    <th><span>Control</span></th>
+                </tr>
+            </thead>
+            <tbody class="sb-argstableBlock-body">
+                <tr>
+                    <td><span>propertyName</span><span title="Required">*</span></td>
+                    <td>
+                        <div><span>This is a short description</span></div>
+                        <div class="sb-argstableBlock-summary">
+                            <div><span class="sb-argstableBlock-code">summary</span></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div><span class="sb-argstableBlock-code">defaultValue</span></div>
+                    </td>
+                    <td><button>Set string</button></td>
+                </tr>
+                <tr>
+                    <td><span>propertyName</span><span>*</span></td>
+                    <td>
+                        <div><span>This is a short description</span></div>
+                        <div class="sb-argstableBlock-summary">
+                            <div><span class="sb-argstableBlock-code">summary</span></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div><span class="sb-argstableBlock-code">defaultValue</span></div>
+                    </td>
+                    <td><button>Set string</button></td>
+                </tr>
+                <tr>
+                    <td><span>propertyName</span><span>*</span></td>
+                    <td>
+                        <div><span>This is a short description</span></div>
+                        <div class="sb-argstableBlock-summary">
+                            <div><span class="sb-argstableBlock-code">summary</span></div>
+                        </div>
+                    </td>
+                    <td>
+                        <div><span class="sb-argstableBlock-code">defaultValue</span></div>
+                    </td>
+                    <td><button>Set string</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="sb-nopreview sb-wrapper">
+        <div class="sb-nopreview_main">
+            <h1 class="sb-nopreview_heading sb-heading">No Preview</h1>
+            <p>Sorry, but you either have no stories or none are selected somehow.</p>
+            <ul>
+                <li>Please check the Storybook config.</li>
+                <li>Try reloading the page.</li>
+            </ul>
+            <p>If the problem persists, check the browser console, or the terminal you've run Storybook from.</p>
+        </div>
+    </div>
+    <div class="sb-errordisplay sb-wrapper">
+        <pre id="error-message" class="sb-heading"></pre>
+        <pre class="sb-errordisplay_code"><code id="error-stack"></code></pre>
+    </div>
+    <div id="root">
+        <div style="display: flex; height: 100%; direction: ltr;">
+            <aside data-testid="ps-sidebar-root-test-id" width="250px" class="ps-sidebar-root ps-broken css-14dbqr2">
+                <div data-testid="ps-sidebar-container-test-id" class="ps-sidebar-container css-1hhlh5t">
+                    <div style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="css-1vmkajq" style="margin-bottom: 24px; margin-top: 16px;">
+                            <div style="display: flex; align-items: center;">
+                                <div class="css-kyhzew">P</div>
+                                <p font-weight="700" color="#0098e5" class="css-crt1ee">Pro Sidebar</p>
+                            </div>
+                        </div>
+                        <div style="flex: 1 1 0%; margin-bottom: 32px;">
+                            <div style="padding: 0px 24px; margin-bottom: 8px;">
+                                <p font-weight="600" class="css-1o7yz74" style="opacity: 0.7; letter-spacing: 0.5px;">
+                                    General</p>
+                            </div>
+                            <nav class="ps-menu-root css-vj11vy">
+                                <ul class="css-ewdv3l">
+                                    <li class="ps-menuitem-root ps-submenu-root css-uf9z8p"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M2 13h6v8H2v-8zM9 3h6v18H9V3zm7 5h6v13h-6V8z"></path>
+                                                </svg></span><span class="ps-menu-label css-12w9als">Charts</span><span
+                                                class="ps-menu-suffix css-b3iwgq">
+                                                <div shape="circle" class="css-2mwlx5">6</div>
+                                            </span><span class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                    class="css-honxw6"></span></span></a>
+                                        <div data-testid="ps-submenu-content-test-id"
+                                            class="ps-submenu-content css-q92egj">
+                                            <ul class="css-ewdv3l">
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Pie charts</span></a>
+                                                </li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Line charts</span></a>
+                                                </li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Bar charts</span></a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                    <li class="ps-menuitem-root ps-submenu-root css-uf9z8p"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M2.05 13h5.477a17.9 17.9 0 0 0 2.925 8.88A10.005 10.005 0 0 1 2.05 13zm0-2a10.005 10.005 0 0 1 8.402-8.88A17.9 17.9 0 0 0 7.527 11H2.05zm19.9 0h-5.477a17.9 17.9 0 0 0-2.925-8.88A10.005 10.005 0 0 1 21.95 11zm0 2a10.005 10.005 0 0 1-8.402 8.88A17.9 17.9 0 0 0 16.473 13h5.478zM9.53 13h4.94A15.908 15.908 0 0 1 12 20.592 15.908 15.908 0 0 1 9.53 13zm0-2A15.908 15.908 0 0 1 12 3.408 15.908 15.908 0 0 1 14.47 11H9.53z">
+                                                    </path>
+                                                </svg></span><span class="ps-menu-label css-12w9als">Maps</span><span
+                                                class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                    class="css-honxw6"></span></span></a>
+                                        <div data-testid="ps-submenu-content-test-id"
+                                            class="ps-submenu-content css-q92egj">
+                                            <ul class="css-ewdv3l">
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Google maps</span></a>
+                                                </li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Open street
+                                                            maps</span></a></li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                    <li class="ps-menuitem-root ps-submenu-root css-uf9z8p"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M16 9l4.371 1.749c.38.151.629.52.629.928V21c0 .552-.448 1-1 1H4c-.552 0-1-.448-1-1v-9.323c0-.409.249-.777.629-.928L8 9h8zm4 5H8v5h12v-5zM16 3c.552 0 1 .448 1 1v4H7V4c0-.552.448-1 1-1h8z">
+                                                    </path>
+                                                </svg></span><span class="ps-menu-label css-12w9als">Theme</span><span
+                                                class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                    class="css-honxw6"></span></span></a>
+                                        <div data-testid="ps-submenu-content-test-id"
+                                            class="ps-submenu-content css-q92egj">
+                                            <ul class="css-ewdv3l">
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Dark</span></a></li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Light</span></a></li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                    <li class="ps-menuitem-root ps-submenu-root css-uf9z8p"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M4.873 3h14.254a1 1 0 0 1 .809.412l3.823 5.256a.5.5 0 0 1-.037.633L12.367 21.602a.5.5 0 0 1-.734 0L.278 9.302a.5.5 0 0 1-.037-.634l3.823-5.256A1 1 0 0 1 4.873 3z">
+                                                    </path>
+                                                </svg></span><span
+                                                class="ps-menu-label css-12w9als">Components</span><span
+                                                class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                    class="css-honxw6"></span></span></a>
+                                        <div data-testid="ps-submenu-content-test-id"
+                                            class="ps-submenu-content css-q92egj">
+                                            <ul class="css-ewdv3l">
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Grid</span></a></li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Layout</span></a></li>
+                                                <li class="ps-menuitem-root ps-submenu-root css-1ix01sa"><a
+                                                        class="ps-menu-button" data-testid="ps-menu-button-test-id"
+                                                        tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als">Forms</span><span
+                                                            class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                                class="css-honxw6"></span></span></a>
+                                                    <div data-testid="ps-submenu-content-test-id"
+                                                        class="ps-submenu-content css-gxg0hp">
+                                                        <ul class="css-ewdv3l">
+                                                            <li class="ps-menuitem-root css-1xrzd0n"><a
+                                                                    class="ps-menu-button"
+                                                                    data-testid="ps-menu-button-test-id"
+                                                                    tabindex="0"><span
+                                                                        class="ps-menu-label css-12w9als">
+                                                                        Input</span></a></li>
+                                                            <li class="ps-menuitem-root css-1xrzd0n"><a
+                                                                    class="ps-menu-button"
+                                                                    data-testid="ps-menu-button-test-id"
+                                                                    tabindex="0"><span
+                                                                        class="ps-menu-label css-12w9als">
+                                                                        Select</span></a></li>
+                                                            <li class="ps-menuitem-root ps-submenu-root css-1g8139"><a
+                                                                    class="ps-menu-button"
+                                                                    data-testid="ps-menu-button-test-id"
+                                                                    tabindex="0"><span
+                                                                        class="ps-menu-label css-12w9als">More</span><span
+                                                                        class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                                            class="css-honxw6"></span></span></a>
+                                                                <div data-testid="ps-submenu-content-test-id"
+                                                                    class="ps-submenu-content css-gxg0hp">
+                                                                    <ul class="css-ewdv3l">
+                                                                        <li class="ps-menuitem-root css-1gakll7"><a
+                                                                                class="ps-menu-button"
+                                                                                data-testid="ps-menu-button-test-id"
+                                                                                tabindex="0"><span
+                                                                                    class="ps-menu-label css-12w9als">
+                                                                                    CheckBox</span></a></li>
+                                                                        <li class="ps-menuitem-root css-1gakll7"><a
+                                                                                class="ps-menu-button"
+                                                                                data-testid="ps-menu-button-test-id"
+                                                                                tabindex="0"><span
+                                                                                    class="ps-menu-label css-12w9als">
+                                                                                    Radio</span></a></li>
+                                                                    </ul>
+                                                                </div>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                    <li class="ps-menuitem-root ps-submenu-root css-uf9z8p"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M6 9h13.938l.5-2H8V5h13.72a1 1 0 0 1 .97 1.243l-2.5 10a1 1 0 0 1-.97.757H5a1 1 0 0 1-1-1V4H2V2h3a1 1 0 0 1 1 1v6zm0 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm12 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4z">
+                                                    </path>
+                                                </svg></span><span
+                                                class="ps-menu-label css-12w9als">E-commerce</span><span
+                                                class="ps-submenu-expand-icon css-1f51y9w"><span
+                                                    class="css-honxw6"></span></span></a>
+                                        <div data-testid="ps-submenu-content-test-id"
+                                            class="ps-submenu-content css-q92egj">
+                                            <ul class="css-ewdv3l">
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Product</span></a></li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Orders</span></a></li>
+                                                <li class="ps-menuitem-root css-1p56p2p"><a class="ps-menu-button"
+                                                        data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                            class="ps-menu-label css-12w9als"> Credit card</span></a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </nav>
+                            <div style="padding: 0px 24px; margin-bottom: 8px; margin-top: 32px;">
+                                <p font-weight="600" class="css-1o7yz74" style="opacity: 0.7; letter-spacing: 0.5px;">
+                                    Extra</p>
+                            </div>
+                            <nav class="ps-menu-root css-vj11vy">
+                                <ul class="css-ewdv3l">
+                                    <li class="ps-menuitem-root css-urhspq"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M2 11h20v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-9zm15-8h4a1 1 0 0 1 1 1v5H2V4a1 1 0 0 1 1-1h4V1h2v2h6V1h2v2z">
+                                                    </path>
+                                                </svg></span><span
+                                                class="ps-menu-label css-12w9als">Calendar</span><span
+                                                class="ps-menu-suffix css-b3iwgq">
+                                                <div shape="rounded" class="css-1p4bbo4">New</div>
+                                            </span></a></li>
+                                    <li class="ps-menuitem-root css-urhspq"><a class="ps-menu-button"
+                                            data-testid="ps-menu-button-test-id" tabindex="0"><span
+                                                class="ps-menu-icon css-15w28gg"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M21 18H6a1 1 0 0 0 0 2h15v2H6a3 3 0 0 1-3-3V4a2 2 0 0 1 2-2h16v16zm-5-9V7H8v2h8z">
+                                                    </path>
+                                                </svg></span><span
+                                                class="ps-menu-label css-12w9als">Documentation</span></a></li>
+                                    <li class="ps-menuitem-root ps-disabled css-juoynw" disabled=""><a
+                                            class="ps-menu-button ps-disabled" data-testid="ps-menu-button-test-id"
+                                            tabindex="0"><span class="ps-menu-icon ps-disabled css-15w28gg"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 24 24" fill="currentColor">
+                                                    <path
+                                                        d="M14.121 10.48a1 1 0 0 0-1.414 0l-.707.706a2 2 0 1 1-2.828-2.828l5.63-5.632a6.5 6.5 0 0 1 6.377 10.568l-2.108 2.135-4.95-4.95zM3.161 4.468a6.503 6.503 0 0 1 8.009-.938L7.757 6.944a4 4 0 0 0 5.513 5.794l.144-.137 4.243 4.242-4.243 4.243a2 2 0 0 1-2.828 0L3.16 13.66a6.5 6.5 0 0 1 0-9.192z">
+                                                    </path>
+                                                </svg></span><span
+                                                class="ps-menu-label ps-disabled css-12w9als">Examples</span></a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div style="display: flex; justify-content: center; padding-bottom: 20px;">
+                            <div class="css-49v479">
+                                <div style="margin-bottom: 12px;"><svg xmlns="http://www.w3.org/2000/svg" width="30"
+                                        height="30" viewBox="0 0 24 24" fill="currentColor">
+                                        <path fill="none" d="M0 0h24v24H0z"></path>
+                                        <path
+                                            d="M12 2C6.475 2 2 6.475 2 12a9.994 9.994 0 0 0 6.838 9.488c.5.087.687-.213.687-.476 0-.237-.013-1.024-.013-1.862-2.512.463-3.162-.612-3.362-1.175-.113-.288-.6-1.175-1.025-1.413-.35-.187-.85-.65-.013-.662.788-.013 1.35.725 1.538 1.025.9 1.512 2.338 1.087 2.912.825.088-.65.35-1.087.638-1.337-2.225-.25-4.55-1.113-4.55-4.938 0-1.088.387-1.987 1.025-2.688-.1-.25-.45-1.275.1-2.65 0 0 .837-.262 2.75 1.026a9.28 9.28 0 0 1 2.5-.338c.85 0 1.7.112 2.5.337 1.912-1.3 2.75-1.024 2.75-1.024.55 1.375.2 2.4.1 2.65.637.7 1.025 1.587 1.025 2.687 0 3.838-2.337 4.688-4.562 4.938.362.312.675.912.675 1.85 0 1.337-.013 2.412-.013 2.75 0 .262.188.574.688.474A10.016 10.016 0 0 0 22 12c0-5.525-4.475-10-10-10z">
+                                        </path>
+                                    </svg></div>
+                                <p font-weight="600" class="css-1t8vr00">Pro Sidebar</p>
+                                <p class="css-idbnva" style="letter-spacing: 1px; opacity: 0.7;">V 1.1.0-alpha.1</p>
+                                <div style="margin-top: 16px;"><a
+                                        href="https://github.com/azouaoui-med/react-pro-sidebar/blob/master/storybook/Playground.tsx"
+                                        target="_blank" class="css-1hnpzud">
+                                        <p color="#607489" font-weight="600" class="css-qnnkq7">View code</p>
+                                    </a></div>
+                            </div>
+                        </div>
+                    </div>
+                </div><img data-testid="ps-sidebar-image-test-id"
+                    src="https://user-images.githubusercontent.com/25878302/144499035-2911184c-76d3-4611-86e7-bc4e8ff84ff5.jpg"
+                    alt="sidebar background" class="ps-sidebar-image css-16g65jg">
+            </aside>
+            <main>
+                <div style="padding: 16px 24px; color: rgb(68, 89, 110);">
+                    <div style="margin-bottom: 16px;"><button class="sb-button">Toggle</button></div>
+                    <div style="margin-bottom: 48px;">
+                        <p font-weight="600" class="css-1pr8naw">React Pro Sidebar</p>
+                        <p class="css-3vvtry">React Pro Sidebar provides a set of components for creating high level and
+                            customizable side navigation</p>
+                        <div class="css-1b4m6m9">
+                            <p><a href="https://www.npmjs.com/package/react-pro-sidebar" rel="nofollow"
+                                    target="_blank"><img
+                                        src="https://img.shields.io/github/license/azouaoui-med/react-pro-sidebar?style=flat-square"
+                                        alt="License"></a><a href="https://www.npmjs.com/package/react-pro-sidebar"
+                                    rel="nofollow" target="_blank"><img
+                                        src="https://img.shields.io/npm/dependency-version/react-pro-sidebar/peer/react?style=flat-square"
+                                        alt="Peer"></a><a href="https://www.npmjs.com/package/react-pro-sidebar"
+                                    rel="nofollow" target="_blank"><img
+                                        src="https://img.shields.io/npm/dt/react-pro-sidebar?style=flat-square"
+                                        alt="Download"></a><a href="https://github.com/azouaoui-med/react-pro-sidebar"
+                                    target="_blank"><img
+                                        src="https://img.shields.io/github/stars/azouaoui-med/react-pro-sidebar?style=social"
+                                        alt="Stars"></a><a href="https://github.com/azouaoui-med/react-pro-sidebar"
+                                    target="_blank"><img
+                                        src="https://img.shields.io/github/forks/azouaoui-med/react-pro-sidebar?style=social"
+                                        alt="Forks"></a></p>
+                        </div>
+                    </div>
+                    <div style="padding: 0px 8px;">
+                        <div style="margin-bottom: 16px;">
+                            <div class="css-1sg2lsz">
+                                <div class="css-fns6t3"><input id="collapse" type="checkbox"
+                                        style="cursor: pointer; position: absolute; inset: 0px; width: 32px; height: 20px; opacity: 0; z-index: 2;">
+                                    <div class="css-1e37bby"></div>
+                                </div><label for="collapse" class="css-1awwcno">Collapse</label>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div class="css-1sg2lsz">
+                                <div class="css-fns6t3"><input id="rtl" type="checkbox"
+                                        style="cursor: pointer; position: absolute; inset: 0px; width: 32px; height: 20px; opacity: 0; z-index: 2;">
+                                    <div class="css-1e37bby"></div>
+                                </div><label for="rtl" class="css-1awwcno">RTL</label>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div class="css-1sg2lsz">
+                                <div class="css-fns6t3"><input id="theme" type="checkbox"
+                                        style="cursor: pointer; position: absolute; inset: 0px; width: 32px; height: 20px; opacity: 0; z-index: 2;">
+                                    <div class="css-1e37bby"></div>
+                                </div><label for="theme" class="css-1awwcno">Dark theme</label>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <div class="css-1sg2lsz">
+                                <div class="css-fns6t3"><input id="image" type="checkbox"
+                                        style="cursor: pointer; position: absolute; inset: 0px; width: 32px; height: 20px; opacity: 0; z-index: 2;">
+                                    <div class="css-1e37bby"></div>
+                                </div><label for="image" class="css-1awwcno">Image</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="docs-root" hidden="true"></div>
+    <script>window['CONFIG_TYPE'] = "PRODUCTION";
+
+
+
+        window['LOGLEVEL'] = "info";
+
+
+
+        window['FRAMEWORK_OPTIONS'] = {};
+
+
+
+
+
+        window['FEATURES'] = { "postcss": true, "emotionAlias": true };
+
+
+
+        window['STORIES'] = [{ "titlePrefix": "", "directory": "./storybook", "files": "**/*.stories.@(tsx|mdx)", "importPathMatcher": "^\\.[\\\\/](?:storybook(?:\\/(?!\\.)(?:(?:(?!(?:^|\\/)\\.).)*?)\\/|\\/|$)(?!\\.)(?=.)[^/]*?\\.stories\\.(tsx|mdx))$" }];</script>
+    <script src="runtime~main.22318119.iframe.bundle.js"></script>
+    <script src="vendors~main.34ecbeb1.iframe.bundle.js"></script>
+    <script src="main.b31d4add.iframe.bundle.js"></script>
+</body>
+
+</html>
